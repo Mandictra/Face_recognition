@@ -1,0 +1,10 @@
+opencv-python 
+face-recognition
+numpy 
+pandas 
+pillow 
+tk 
+openpyxl
+requests
+
+
