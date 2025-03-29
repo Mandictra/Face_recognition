@@ -37,11 +37,13 @@ pip install -r requirements.txt
 Create a **.env** file in the project directory:
 ```env
 RECIPIENT_EMAIL=youremail@example.com
+EMAIL_SENDER=recipient@example.com
+EMAIL_PASSWORD=app password
 ```
 
 ### 4. Run the Application
 ```bash
-python main.py
+python Esp32face.py
 ```
 
 ## Usage
