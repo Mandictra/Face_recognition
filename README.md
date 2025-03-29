@@ -17,8 +17,8 @@ This is a **Facial Recognition Attendance System** built using **Python**, **Ope
 ## Installation
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/facial-recognition-attendance.git
-cd facial-recognition-attendance
+git clone[https://github.com/Mandictra/Face_recognition.git]
+cd Face_recognition
 ```
 
 ### 2. Install Dependencies
@@ -54,8 +54,9 @@ python Esp32face.py
 5. **Exit:** Click `Exit` to close the application.
 
 ## ESP32 API
-Ensure your ESP32 has a web server running and update the `ESP32_IP` in `main.py`.
-- `http://<ESP32_IP>/control?action=open_door` – Opens the door.
+Ensure your ESP32 has a web server running and update the `ESP32_IP` in `Esp32face.py`.
+From the main.cpp get the ip address of your esp32
+- `http://193.0.0.106` – checks the esp32.
 
 ## Contribution
 Feel free to fork this project and submit pull requests for improvements.
