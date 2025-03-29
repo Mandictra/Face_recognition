@@ -4,6 +4,10 @@ import smtplib
 import ssl
 from email.message import EmailMessage
 from tkinter import messagebox
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 def send_attendance_report(attendance_file, recipient_email):
     if not os.path.exists(attendance_file):
@@ -14,8 +18,13 @@ def send_attendance_report(attendance_file, recipient_email):
     attendance_excel = "attendance.xlsx"
     df.to_excel(attendance_excel, index=False)
 
-    email_sender = "omsohhorn@gmail.com"  # Change this
-    email_password = "hbcn lfpk rzpq qmie"   # Use an app password for security
+    # Load email credentials securely
+    email_sender = os.getenv("EMAIL_SENDER")
+    email_password = os.getenv("EMAIL_PASSWORD")
+
+    if not email_sender or not email_password:
+        messagebox.showerror("Error", "Email credentials not found in .env file.")
+        return
 
     subject = "Daily Attendance Report"
     body = "Please find the attached attendance report."

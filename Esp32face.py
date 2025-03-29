@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 import cv2
 import face_recognition
 import numpy as np
@@ -7,43 +8,49 @@ import pandas as pd
 import requests
 from datetime import datetime
 import tkinter as tk
-from tkinter import Label, Button, Entry, StringVar, messagebox
+from tkinter import Label, Button, Entry, StringVar, messagebox, ttk
 from PIL import Image, ImageTk
-from send_email import send_attendance_report  # Ensure this module exists
+from send_email import send_attendance_report
 
-ESP32_IP = "http://193.0.0.104/"  # Change this to your ESP32's IP
+load_dotenv()
+
+ESP32_IP = "http://193.0.0.104/"
 
 class FacialRecognitionUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Facial Recognition System")
         self.root.geometry("900x700")
-
-        self.video_label = Label(self.root)
+        self.root.configure(bg="#2E2E2E")  # Dark background
+        
+        self.video_label = Label(self.root, bg="#2E2E2E")
         self.video_label.pack()
 
         self.name_var = StringVar()
         self.reg_var = StringVar()
 
-        Label(self.root, text="Name:").pack()
-        Entry(self.root, textvariable=self.name_var).pack()
+        Label(self.root, text="Name:", fg="white", bg="#2E2E2E").pack()
+        Entry(self.root, textvariable=self.name_var, bg="#555555", fg="white", insertbackground="white").pack()
 
-        Label(self.root, text="Registration Number:").pack()
-        Entry(self.root, textvariable=self.reg_var).pack()
+        Label(self.root, text="Registration Number:", fg="white", bg="#2E2E2E").pack()
+        Entry(self.root, textvariable=self.reg_var, bg="#555555", fg="white", insertbackground="white").pack()
 
-        self.capture_button = Button(self.root, text="Register Face", command=self.register_face)
+        btn_style = {"bg": "#444444", "fg": "white", "activebackground": "#666666", "activeforeground": "white"}
+
+        self.capture_button = Button(self.root, text="Register Face", command=self.register_face, **btn_style)
         self.capture_button.pack()
 
-        self.attendance_button = Button(self.root, text="Mark Attendance", command=self.mark_attendance)
+        self.attendance_button = Button(self.root, text="Mark Attendance", command=self.mark_attendance, **btn_style)
         self.attendance_button.pack()
 
-        self.access_button = Button(self.root, text="Check Access", command=self.check_access)
+        # Added Check Access Button
+        self.access_button = Button(self.root, text="Check Access", command=self.check_access, **btn_style)
         self.access_button.pack()
 
-        self.email_button = Button(self.root, text="Send Attendance Report", command=self.send_report)
+        self.email_button = Button(self.root, text="Send Attendance Report", command=self.send_report, **btn_style)
         self.email_button.pack()
 
-        self.exit_button = Button(self.root, text="Exit", command=self.root.quit)
+        self.exit_button = Button(self.root, text="Exit", command=self.root.quit, **btn_style)
         self.exit_button.pack()
 
         self.cap = cv2.VideoCapture(0)
@@ -51,16 +58,16 @@ class FacialRecognitionUI:
         self.known_face_names = []
         self.face_database_file = "face_database.dat"
         self.attendance_file = "attendance.csv"
-        
         self.load_known_faces()
         self.update_video()
 
     def send_report(self):
-        recipient_email = "omsohhorn@gmail.com"
-        send_attendance_report(self.attendance_file, recipient_email)
+        if not self.recipient_email:
+            messagebox.showerror("Error", "Recipient email not set in .env file.")
+            return
+        send_attendance_report(self.attendance_file, self.recipient_email)
 
     def load_known_faces(self):
-        """Load saved face encodings from file."""
         if os.path.exists(self.face_database_file):
             with open(self.face_database_file, "rb") as f:
                 data = pickle.load(f)
@@ -68,13 +75,11 @@ class FacialRecognitionUI:
                 self.known_face_names = data["names"]
 
     def save_face_database(self):
-        """Save the known faces to a file."""
         data = {"encodings": self.known_face_encodings, "names": self.known_face_names}
         with open(self.face_database_file, "wb") as f:
             pickle.dump(data, f)
 
     def update_video(self):
-        """Continuously updates the video feed in the GUI."""
         ret, frame = self.cap.read()
         if ret:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -85,7 +90,6 @@ class FacialRecognitionUI:
         self.root.after(10, self.update_video)
 
     def check_access(self):
-        """Check if the face is recognized and open the door if found."""
         ret, frame = self.cap.read()
         if not ret:
             messagebox.showerror("Error", "Failed to capture frame.")
@@ -116,21 +120,8 @@ class FacialRecognitionUI:
                 messagebox.showerror("Error", f"Connection failed: {e}")
         else:
             messagebox.showerror("Error", "Face not recognized.")
-    def is_duplicate_face(self, face_encoding):
-        """Check if the face is already registered."""
-        matches = face_recognition.compare_faces(self.known_face_encodings, face_encoding)
-        return any(matches)
-
-    def has_already_marked_attendance(self, name, reg_number):
-        """Check if the person has already marked attendance today."""
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        if os.path.exists(self.attendance_file):
-            df = pd.read_csv(self.attendance_file)
-            return not df[(df["Name"] == name) & (df["RegNumber"] == reg_number) & (df["Date"] == date_str)].empty
-        return False
 
     def register_face(self):
-        """Capture and register a new face."""
         name = self.name_var.get().strip()
         reg_number = self.reg_var.get().strip()
 
@@ -150,7 +141,7 @@ class FacialRecognitionUI:
 
         face_encoding = face_recognition.face_encodings(frame, face_locations)[0]
 
-        if self.is_duplicate_face(face_encoding):
+        if any(face_recognition.compare_faces(self.known_face_encodings, face_encoding)):
             messagebox.showerror("Error", "You are already registered.")
             return
 
@@ -159,6 +150,7 @@ class FacialRecognitionUI:
         self.save_face_database()
 
         messagebox.showinfo("Success", f"Face for {name} registered.")
+
     def log_attendance(self, name, reg_number):
         date_str = datetime.now().strftime("%Y-%m-%d")
         time_str = datetime.now().strftime("%H:%M:%S")
@@ -173,7 +165,6 @@ class FacialRecognitionUI:
         df.to_csv(self.attendance_file, index=False)
 
     def mark_attendance(self):
-        """Recognize face and mark attendance."""
         ret, frame = self.cap.read()
         if not ret:
             messagebox.showerror("Error", "Failed to capture frame.")
@@ -191,24 +182,8 @@ class FacialRecognitionUI:
         if best_match_index is not None and matches[best_match_index]:
             unique_id = self.known_face_names[best_match_index]
             name, reg_number = unique_id.split("_")
-
-            if self.has_already_marked_attendance(name, reg_number):
-                messagebox.showinfo("Info", f"{name} has already been marked present today.")
-                return
-
             self.log_attendance(name, reg_number)
             messagebox.showinfo("Success", f"Attendance marked for {name}.")
-
-            # **Send request to ESP32 to open door**
-            try:
-                response = requests.get(f"{ESP32_IP}/control?action=open_door")
-                if response.status_code == 200:
-                    messagebox.showinfo("Success", "Door opened!")
-                else:
-                    messagebox.showerror("Error", "Failed to open the door.")
-            except requests.exceptions.RequestException as e:
-                messagebox.showerror("Error", f"Connection failed: {e}")
-
         else:
             messagebox.showerror("Error", "Face not recognized.")
 
