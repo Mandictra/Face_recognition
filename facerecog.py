@@ -15,31 +15,34 @@ class FacialRecognitionUI:
         self.root = root
         self.root.title("Facial Recognition System")
         self.root.geometry("900x700")
+        self.root.configure(bg="#2E2E2E")  # Dark background
         
-        self.video_label = Label(self.root)
+        self.video_label = Label(self.root, bg="#2E2E2E")
         self.video_label.pack()
-        
+
         self.name_var = StringVar()
         self.reg_var = StringVar()
-        
-        Label(self.root, text="Name:").pack()
-        Entry(self.root, textvariable=self.name_var).pack()
-        
-        Label(self.root, text="Registration Number:").pack()
-        Entry(self.root, textvariable=self.reg_var).pack()
-        
-        self.capture_button = Button(self.root, text="Register Face", command=self.register_face)
+
+        Label(self.root, text="Name:", fg="white", bg="#2E2E2E").pack()
+        Entry(self.root, textvariable=self.name_var, bg="#555555", fg="white", insertbackground="white").pack()
+
+        Label(self.root, text="Registration Number:", fg="white", bg="#2E2E2E").pack()
+        Entry(self.root, textvariable=self.reg_var, bg="#555555", fg="white", insertbackground="white").pack()
+
+        btn_style = {"bg": "#444444", "fg": "white", "activebackground": "#666666", "activeforeground": "white"}
+
+        self.capture_button = Button(self.root, text="Register Face", command=self.register_face, **btn_style)
         self.capture_button.pack()
-        
-        self.attendance_button = Button(self.root, text="Mark Attendance", command=self.mark_attendance)
+
+        self.attendance_button = Button(self.root, text="Mark Attendance", command=self.mark_attendance, **btn_style)
         self.attendance_button.pack()
-        
-        self.email_button = Button(self.root, text="Send Attendance Report", command=self.send_report)
+
+        self.email_button = Button(self.root, text="Send Attendance Report", command=self.send_report, **btn_style)
         self.email_button.pack()
-        
-        self.exit_button = Button(self.root, text="Exit", command=self.root.quit)
+
+        self.exit_button = Button(self.root, text="Exit", command=self.root.quit, **btn_style)
         self.exit_button.pack()
-        
+
         self.cap = cv2.VideoCapture(0)
         self.known_face_encodings = []
         self.known_face_names = []
@@ -47,10 +50,11 @@ class FacialRecognitionUI:
         self.attendance_file = "attendance.csv"
         self.load_known_faces()
         self.update_video()
+
     
     def send_report(self):
         recipient_email = "omsohhorn@gmail.com"  # Change this
-        send_attendance_report(self.attendance_file, recipient_email)  # Calls function from email_sender.py
+        send_attendance_report(self.attendance_file, recipient_email)  # Calls function from send_email.py
     
     def load_known_faces(self):
         if os.path.exists(self.face_database_file):
