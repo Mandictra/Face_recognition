@@ -17,7 +17,7 @@ This is a **Facial Recognition Attendance System** built using **Python**, **Ope
 ## Installation
 ### 1. Clone the Repository
 ```bash
-git clone[https://github.com/Mandictra/Face_recognition.git]
+git clone https://github.com/Mandictra/Face_recognition.git
 cd Face_recognition
 ```
 
