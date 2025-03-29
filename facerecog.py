@@ -53,8 +53,10 @@ class FacialRecognitionUI:
 
     
     def send_report(self):
-        recipient_email = "omsohhorn@gmail.com"  # Change this
-        send_attendance_report(self.attendance_file, recipient_email)  # Calls function from send_email.py
+        if not self.recipient_email:
+            messagebox.showerror("Error", "Recipient email not set in .env file.")
+            return
+        send_attendance_report(self.attendance_file, self.recipient_email)  # Calls function from send_email.py
     
     def load_known_faces(self):
         if os.path.exists(self.face_database_file):
