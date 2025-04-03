@@ -62,6 +62,7 @@ class FacialRecognitionUI:
         self.update_video()
 
     def send_report(self):
+        self.recipient_email = os.getenv('RECIPIENT_EMAIL')
         if not self.recipient_email:
             messagebox.showerror("Error", "Recipient email not set in .env file.")
             return
