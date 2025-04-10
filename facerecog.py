@@ -6,7 +6,7 @@ import pickle
 import pandas as pd
 from datetime import datetime
 import tkinter as tk
-from tkinter import Label, Button, Entry, StringVar, messagebox
+from tkinter import Label, Button, Entry, StringVar, messagebox, Toplevel, Listbox, Scrollbar, Frame
 from PIL import Image, ImageTk
 from send_email import send_attendance_report  # Import the email module
 
@@ -29,19 +29,41 @@ class FacialRecognitionUI:
         Label(self.root, text="Registration Number:", fg="white", bg="#2E2E2E").pack()
         Entry(self.root, textvariable=self.reg_var, bg="#555555", fg="white", insertbackground="white").pack()
 
-        btn_style = {"bg": "#444444", "fg": "white", "activebackground": "#666666", "activeforeground": "white"}
+        # Create frame for buttons
+        button_frame = Frame(self.root, bg="#2E2E2E")
+        button_frame.pack(pady=10)
 
-        self.capture_button = Button(self.root, text="Register Face", command=self.register_face, **btn_style)
-        self.capture_button.pack()
+        btn_style = {"bg": "#444444", "fg": "white", "activebackground": "#666666", "activeforeground": "white", "width": 15}
 
-        self.attendance_button = Button(self.root, text="Mark Attendance", command=self.mark_attendance, **btn_style)
-        self.attendance_button.pack()
+        # First row of buttons
+        row1_frame = Frame(button_frame, bg="#2E2E2E")
+        row1_frame.pack()
 
-        self.email_button = Button(self.root, text="Send Attendance Report", command=self.send_report, **btn_style)
-        self.email_button.pack()
+        self.capture_button = Button(row1_frame, text="Register Face", command=self.register_face, **btn_style)
+        self.capture_button.pack(side=tk.LEFT, padx=5)
 
-        self.exit_button = Button(self.root, text="Exit", command=self.root.quit, **btn_style)
-        self.exit_button.pack()
+        self.attendance_button = Button(row1_frame, text="Mark Attendance", command=self.mark_attendance, **btn_style)
+        self.attendance_button.pack(side=tk.LEFT, padx=5)
+
+        # Second row of buttons
+        row2_frame = Frame(button_frame, bg="#2E2E2E")
+        row2_frame.pack(pady=5)
+
+        self.email_button = Button(row2_frame, text="Send Report", command=self.send_report, **btn_style)
+        self.email_button.pack(side=tk.LEFT, padx=5)
+
+        self.clear_button = Button(row2_frame, text="Clear Attendance", command=self.clear_attendance, **btn_style)
+        self.clear_button.pack(side=tk.LEFT, padx=5)
+
+        # Third row of buttons
+        row3_frame = Frame(button_frame, bg="#2E2E2E")
+        row3_frame.pack(pady=5)
+
+        self.manage_button = Button(row3_frame, text="Manage Faces", command=self.manage_faces, **btn_style)
+        self.manage_button.pack(side=tk.LEFT, padx=5)
+
+        self.exit_button = Button(row3_frame, text="Exit", command=self.root.quit, **btn_style)
+        self.exit_button.pack(side=tk.LEFT, padx=5)
 
         self.cap = cv2.VideoCapture(0)
         self.known_face_encodings = []
@@ -50,7 +72,64 @@ class FacialRecognitionUI:
         self.attendance_file = "attendance.csv"
         self.load_known_faces()
         self.update_video()
-
+    
+    def clear_attendance(self):
+        """Manual method to clear attendance records"""
+        if not os.path.exists(self.attendance_file):
+            messagebox.showinfo("Info", "No attendance records to clear.")
+            return
+        
+        confirm = messagebox.askyesno("Confirm", "Are you sure you want to clear all attendance records?")
+        if confirm:
+            try:
+                os.remove(self.attendance_file)
+                messagebox.showinfo("Success", "Attendance records cleared.")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to clear attendance: {str(e)}")
+    
+    def manage_faces(self):
+        """Open a window to manage registered faces"""
+        manage_window = Toplevel(self.root)
+        manage_window.title("Manage Registered Faces")
+        manage_window.geometry("400x300")
+        manage_window.configure(bg="#2E2E2E")
+        
+        scrollbar = Scrollbar(manage_window)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.faces_listbox = Listbox(manage_window, yscrollcommand=scrollbar.set, bg="#555555", fg="white")
+        self.faces_listbox.pack(fill=tk.BOTH, expand=True)
+        scrollbar.config(command=self.faces_listbox.yview)
+        
+        # Populate the listbox
+        for name in self.known_face_names:
+            self.faces_listbox.insert(tk.END, name)
+        
+        delete_button = Button(manage_window, text="Delete Selected", command=self.delete_selected_face, 
+                             bg="#444444", fg="white", activebackground="#666666", activeforeground="white")
+        delete_button.pack()
+    
+    def delete_selected_face(self):
+        """Delete the selected face from the database"""
+        selection = self.faces_listbox.curselection()
+        if not selection:
+            messagebox.showerror("Error", "No face selected.")
+            return
+        
+        index = selection[0]
+        face_name = self.faces_listbox.get(index)
+        
+        # Remove from lists
+        del self.known_face_names[index]
+        del self.known_face_encodings[index]
+        
+        # Save the updated database
+        self.save_face_database()
+        
+        # Update the listbox
+        self.faces_listbox.delete(index)
+        
+        messagebox.showinfo("Success", f"Deleted {face_name} from database.")
     
     def send_report(self):
         self.recipient_email = os.getenv('RECIPIENT_EMAIL')
